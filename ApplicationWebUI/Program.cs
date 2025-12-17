@@ -70,11 +70,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseHttpMethodOverride(new HttpMethodOverrideOptions
-{
-    FormFieldName = "X-HTTP-Method-Override"
-});
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

@@ -31,6 +31,10 @@ namespace DataAccessLayer.Context
                 .HasIndex(x => x.Code)
                 .IsUnique();
 
+            modelBuilder.Entity<StockItem>()
+                .HasIndex(x => x.StockUnitId)
+                .IsUnique();
+
             modelBuilder.Entity<StockType>()
                 .HasMany(x => x.StockUnits)
                 .WithOne(x => x.StockType)

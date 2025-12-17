@@ -106,6 +106,11 @@ namespace BusinessLayer.Services
             if (!unitExists)
                 throw new KeyNotFoundException("StockUnit not found.");
 
+            var duplicate = await _stockItemRepo.Query()
+                .AnyAsync(x => x.StockUnitId == dto.StockUnitId);
+            if (duplicate)
+                throw new InvalidOperationException("Stock item already exists for this unit.");
+
             var entity = _mapper.Map<StockItem>(dto);
 
             entity.Id = Guid.NewGuid();
@@ -132,6 +137,11 @@ namespace BusinessLayer.Services
             var unitExists = await _stockUnitRepo.Query().AnyAsync(u => u.Id == dto.StockUnitId);
             if (!unitExists)
                 throw new KeyNotFoundException("StockUnit not found.");
+
+            var duplicate = await _stockItemRepo.Query()
+                .AnyAsync(x => x.StockUnitId == dto.StockUnitId && x.Id != id);
+            if (duplicate)
+                throw new InvalidOperationException("Stock item already exists for this unit.");
 
             _mapper.Map(dto, entity);
 
