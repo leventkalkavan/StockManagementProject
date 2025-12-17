@@ -6,7 +6,6 @@ using DataAccessLayer.Repositories.Abstractions;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 using ApplicationWebUI.Filters;
-using ApplicationWebUI.Middlewares;
 using BusinessLayer.Services.Abstractions;
 
 Log.Logger = new LoggerConfiguration()
@@ -26,6 +25,7 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<GlobalExceptionFilter>();
+    options.Filters.Add<ActionLoggingFilter>();
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -40,6 +40,7 @@ builder.Services.AddScoped<IStockTypeService, StockTypeService>();
 builder.Services.AddScoped<IStockUnitService, StockUnitService>();
 builder.Services.AddScoped<IStockItemService, StockItemService>();
 builder.Services.AddScoped<ILogService, RequestLogService>();
+builder.Services.AddScoped<ActionLoggingFilter>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -89,8 +90,6 @@ app.UseSerilogRequestLogging(options =>
         diagnosticContext.Set("UserAgent", httpContext.Request.Headers.UserAgent.ToString());
     };
 });
-
-app.UseMiddleware<RequestLoggingMiddleware>();
 
 //app.UseAuthorization();
 
