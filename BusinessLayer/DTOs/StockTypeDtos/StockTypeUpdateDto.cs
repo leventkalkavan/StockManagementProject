@@ -1,7 +1,11 @@
-﻿namespace BusinessLayer.DTOs.StockTypeDtos
+using System.ComponentModel.DataAnnotations;
+
+namespace BusinessLayer.DTOs.StockTypeDtos
 {
     public class StockTypeUpdateDto
     {
-        public string Name { get; set; }
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
     }
 }

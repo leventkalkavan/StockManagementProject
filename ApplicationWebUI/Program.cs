@@ -7,6 +7,7 @@ using Serilog;
 using Microsoft.EntityFrameworkCore;
 using ApplicationWebUI.Filters;
 using BusinessLayer.Services.Abstractions;
+using ApplicationWebUI.Middlewares;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -78,6 +79,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseSerilogRequestLogging(options =>
 {

@@ -1,12 +1,26 @@
-﻿namespace BusinessLayer.DTOs.StockItemDtos
+using System.ComponentModel.DataAnnotations;
+
+namespace BusinessLayer.DTOs.StockItemDtos
 {
     public sealed class StockItemCreateDto
     {
+        [Required]
         public Guid StockUnitId { get; set; }
-        public string StockClass { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string StockClass { get; set; } = string.Empty;
+
+        [Range(0, double.MaxValue)]
         public decimal Quantity { get; set; }
+
+        [Range(0, double.MaxValue)]
         public decimal CriticalQuantity { get; set; }
+
+        [StringLength(50)]
         public string? Shelf { get; set; }
+
+        [StringLength(50)]
         public string? Cabinet { get; set; }
     }
 }
