@@ -1,12 +1,55 @@
-ï»¿@model List<BusinessLayer.DTOs.StockUnitDtos.StockUnitDto>
+@model BusinessLayer.DTOs.PagedResult<BusinessLayer.DTOs.StockUnitDtos.StockUnitDto>
 
 @{
     ViewData["Title"] = "Stok Birim Listesi";
+    var items = Model?.Items ?? new List<BusinessLayer.DTOs.StockUnitDtos.StockUnitDto>();
+    var currentPage = Model?.Page ?? 1;
+    var pageSize = Model?.PageSize ?? 10;
+    var totalPages = Model?.TotalPages ?? 0;
+    var searchTerm = Model?.SearchTerm ?? "";
+    int[] pageSizeOptions = { 5, 10, 20, 50 };
+    var startPage = Math.Max(1, currentPage - 2);
+    var endPage = Math.Min(totalPages, currentPage + 2);
+    if (endPage - startPage < 4)
+    {
+        if (startPage == 1)
+        {
+            endPage = Math.Min(totalPages, startPage + 4);
+        }
+        else if (endPage == totalPages)
+        {
+            startPage = Math.Max(1, endPage - 4);
+        }
+    }
 }
 
 <h2>Stok Birim Listesi</h2>
 
-<div class="mb-3">
+<div class="d-flex flex-wrap gap-2 align-items-end justify-content-between mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <input type="hidden" name="page" value="1" />
+        <div class="col-auto">
+            <label class="form-label">Arama</label>
+            <input name="search"
+                   value="@searchTerm"
+                   class="form-control"
+                   placeholder="Ara" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Sayfa Boyutu</label>
+            <select name="pageSize" class="form-select">
+                @foreach (var size in pageSizeOptions)
+                {
+                    <option value="@size" selected="@(size == pageSize ? "selected" : null)">@size</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Ara</button>
+            <a class="btn btn-outline-secondary" href="@Url.Action("Index")">Temizle</a>
+        </div>
+    </form>
+
     <button type="button" class="btn btn-primary"
             data-bs-toggle="modal"
             data-bs-target="#createStockUnitModal">
@@ -14,28 +57,28 @@
     </button>
 </div>
 
-<table class="table table-bordered table-striped table-hover align-middle">
-    <thead class="table-light">
-        <tr>
-            <th>Id</th>
-            <th>Birim Kodu</th>
-            <th>Stok TÃ¼rÃ¼</th>
-            <th>TÃ¼r</th>
-            <th>AÃ§Ä±klama</th>
-            <th>AlÄ±ÅŸ FiyatÄ±</th>
-            <th>AlÄ±ÅŸ Para Birimi</th>
-            <th>SatÄ±ÅŸ FiyatÄ±</th>
-            <th>SatÄ±ÅŸ Para Birimi</th>
-            <th>KaÄŸÄ±t AÄŸÄ±rlÄ±ÄŸÄ±</th>
-            <th>Durum</th>
-            <th style="width: 18%">Ä°ÅŸlemler</th>
-        </tr>
-    </thead>
+@if (items.Any())
+{
+    <table class="table table-bordered table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Id</th>
+                <th>Birim Kodu</th>
+            <th>Stok Türü</th>
+            <th>Tür</th>
+            <th>Açýklama</th>
+            <th>Alýþ Fiyatý</th>
+            <th>Alýþ Para Birimi</th>
+            <th>Satýþ Fiyatý</th>
+            <th>Satýþ Para Birimi</th>
+            <th>Kaðýt Aðýrlýðý</th>
+                <th>Durum</th>
+            <th style="width: 18%">Ýþlemler</th>
+            </tr>
+        </thead>
 
-    <tbody>
-        @if (Model != null && Model.Any())
-        {
-            foreach (var item in Model)
+        <tbody>
+            @foreach (var item in items)
             {
                 <tr>
                     <td>@item.Id</td>
@@ -68,7 +111,7 @@
                                 data-buying="@item.BuyingPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                 data-selling="@item.SellingPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                 data-paperweight="@(item.PaperWeight?.ToString() ?? "")">
-                            DÃ¼zenle
+                            Düzenle
                         </button>
 
                         <form asp-action="Deactivate"
@@ -78,22 +121,40 @@
                             @Html.AntiForgeryToken()
                             <button type="submit"
                                     class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Silmek istediÄŸinizden emin misiniz?');">
+                                    onclick="return confirm('Silmek istediðinizden emin misiniz?');">
                                 Sil
                             </button>
                         </form>
                     </td>
                 </tr>
             }
-        }
-        else
-        {
-            <tr>
-                <td colspan="12" class="text-center">KayÄ±t bulunamadÄ±.</td>
-            </tr>
-        }
-    </tbody>
-</table>
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-secondary">Kayýt bulunamadý.</div>
+}
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Stok birim sayfalama">
+        <ul class="pagination">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, pageSize = pageSize, search = searchTerm })">&#8249;</a>
+            </li>
+            @for (var i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = pageSize, search = searchTerm })">@i</a>
+                </li>
+            }
+            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, pageSize = pageSize, search = searchTerm })">&#8250;</a>
+            </li>
+        </ul>
+    </nav>
+}
 
 <!-- stok birim ekleme modali -->
 <div class="modal fade" id="createStockUnitModal" tabindex="-1" aria-hidden="true">
@@ -117,7 +178,7 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Stok TÃ¼rÃ¼</label>
+                            <label class="form-label">Stok Türü</label>
                             <select name="StockTypeId" class="form-select" asp-items="ViewBag.StockTypes" required></select>
                         </div>
 
@@ -127,32 +188,32 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">AlÄ±ÅŸ FiyatÄ±</label>
+                            <label class="form-label">Alýþ Fiyatý</label>
                             <input name="BuyingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">AlÄ±ÅŸ Para Birimi</label>
+                            <label class="form-label">Alýþ Para Birimi</label>
                             <select name="BuyingCurrency" class="form-select" asp-items="ViewBag.BuyingCurrencies" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">SatÄ±ÅŸ FiyatÄ±</label>
+                            <label class="form-label">Satýþ Fiyatý</label>
                             <input name="SellingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">SatÄ±ÅŸ Para Birimi</label>
+                            <label class="form-label">Satýþ Para Birimi</label>
                             <select name="SellingCurrency" class="form-select" asp-items="ViewBag.SellingCurrencies" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">KaÄŸÄ±t AÄŸÄ±rlÄ±ÄŸÄ±</label>
+                            <label class="form-label">Kaðýt Aðýrlýðý</label>
                             <input name="PaperWeight" type="number" class="form-control" />
                         </div>
 
                         <div class="col-6">
-                            <label class="form-label">AÃ§Ä±klama</label>
+                            <label class="form-label">Açýklama</label>
                             <input name="Description" class="form-control" />
                         </div>
 
@@ -160,7 +221,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ä°ptal</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ýptal</button>
                     <button type="submit" class="btn btn-primary">Ekle</button>
                 </div>
 
@@ -181,7 +242,7 @@
                 <input type="hidden" name="id" id="editId" />
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Stok Birimi DÃ¼zenle</h5>
+                    <h5 class="modal-title">Stok Birimi Düzenle</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -194,7 +255,7 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Stok TÃ¼rÃ¼</label>
+                            <label class="form-label">Stok Türü</label>
                             <select name="StockTypeId" id="editStockTypeId" class="form-select" asp-items="ViewBag.StockTypes" required></select>
                         </div>
 
@@ -204,32 +265,32 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">AlÄ±ÅŸ FiyatÄ±</label>
+                            <label class="form-label">Alýþ Fiyatý</label>
                             <input name="BuyingPrice" id="editBuyingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">AlÄ±ÅŸ Para Birimi</label>
+                            <label class="form-label">Alýþ Para Birimi</label>
                             <select name="BuyingCurrency" id="editBuyingCurrency" class="form-select" asp-items="ViewBag.BuyingCurrencies" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">SatÄ±ÅŸ FiyatÄ±</label>
+                            <label class="form-label">Satýþ Fiyatý</label>
                             <input name="SellingPrice" id="editSellingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">SatÄ±ÅŸ Para Birimi</label>
+                            <label class="form-label">Satýþ Para Birimi</label>
                             <select name="SellingCurrency" id="editSellingCurrency" class="form-select" asp-items="ViewBag.SellingCurrencies" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">KaÄŸÄ±t AÄŸÄ±rlÄ±ÄŸÄ±</label>
+                            <label class="form-label">Kaðýt Aðýrlýðý</label>
                             <input name="PaperWeight" id="editPaperWeight" type="number" class="form-control" />
                         </div>
 
                         <div class="col-6">
-                            <label class="form-label">AÃ§Ä±klama</label>
+                            <label class="form-label">Açýklama</label>
                             <input name="Description" id="editDescription" class="form-control" />
                         </div>
 
@@ -237,8 +298,8 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ä°ptal</button>
-                    <button type="submit" class="btn btn-primary">GÃ¼ncelle</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ýptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
                 </div>
 
             </form>

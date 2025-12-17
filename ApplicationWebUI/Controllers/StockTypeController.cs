@@ -7,6 +7,7 @@ namespace WebUI.Controllers
 {
     public class StockTypeController : Controller
     {
+        private const int DefaultPageSize = 10;
         private readonly IStockTypeService _stockTypeService;
         private readonly IMapper _mapper;
 
@@ -17,10 +18,9 @@ namespace WebUI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize, string? search = null)
         {
-            var stockTypes = await _stockTypeService.GetAllAsync(onlyActive: true);
-            return View(stockTypes);
+            return await BuildIndexAsync(page, pageSize, search);
         }
 
         [HttpPost]
@@ -28,7 +28,10 @@ namespace WebUI.Controllers
         public async Task<IActionResult> Create(StockTypeCreateDto dto)
         {
             if (!ModelState.IsValid)
-                return View(dto);
+            {
+                var paged = await _stockTypeService.GetPagedAsync(1, DefaultPageSize, null, onlyActive: true);
+                return View("Index", paged);
+            }
 
             await _stockTypeService.CreateAsync(dto);
             return RedirectToAction(nameof(Index));
@@ -41,7 +44,8 @@ namespace WebUI.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.Id = id;
-                return View(dto);
+                var paged = await _stockTypeService.GetPagedAsync(1, DefaultPageSize, null, onlyActive: true);
+                return View("Index", paged);
             }
 
             await _stockTypeService.UpdateAsync(id, dto);
@@ -54,6 +58,12 @@ namespace WebUI.Controllers
         {
             await _stockTypeService.DeactivateAsync(id);
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<IActionResult> BuildIndexAsync(int page, int pageSize, string? search)
+        {
+            var paged = await _stockTypeService.GetPagedAsync(page, pageSize, search, onlyActive: true);
+            return View("Index", paged);
         }
     }
 }

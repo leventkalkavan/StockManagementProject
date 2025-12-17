@@ -1,13 +1,57 @@
-ï»¿@model List<BusinessLayer.DTOs.StockItemDto>
+@model BusinessLayer.DTOs.PagedResult<BusinessLayer.DTOs.StockItemDto>
 
 @{
     ViewData["Title"] = "Stok Listesi";
     string StockClassText(string? v) => v == "RawMaterial" ? "Hammadde" : ((v ?? "-"));
+    var items = Model?.Items ?? new List<BusinessLayer.DTOs.StockItemDto>();
+    var currentPage = Model?.Page ?? 1;
+    var pageSize = Model?.PageSize ?? 10;
+    var totalPages = Model?.TotalPages ?? 0;
+    var searchTerm = Model?.SearchTerm ?? "";
+    int[] pageSizeOptions = { 5, 10, 20, 50 };
+    var startPage = Math.Max(1, currentPage - 2);
+    var endPage = Math.Min(totalPages, currentPage + 2);
+    if (endPage - startPage < 4)
+    {
+        if (startPage == 1)
+        {
+            endPage = Math.Min(totalPages, startPage + 4);
+        }
+        else if (endPage == totalPages)
+        {
+            startPage = Math.Max(1, endPage - 4);
+        }
+    }
 }
 
 <h2>Stok Listesi</h2>
 
-<div class="mb-3">
+<div class="d-flex flex-wrap gap-2 align-items-end justify-content-between mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <input type="hidden" name="page" value="1" />
+        <div class="col-auto">
+            <label class="form-label">Arama</label>
+            <input type="text"
+                   name="search"
+                   value="@searchTerm"
+                   class="form-control"
+                   placeholder="Ara" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Sayfa Boyutu</label>
+            <select name="pageSize" class="form-select">
+                @foreach (var size in pageSizeOptions)
+                {
+                    <option value="@size" selected="@(size == pageSize ? "selected" : null)">@size</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Ara</button>
+            <a class="btn btn-outline-secondary" href="@Url.Action("Index")">Temizle</a>
+        </div>
+    </form>
+
     <button type="button"
             class="btn btn-primary"
             data-bs-toggle="modal"
@@ -16,22 +60,22 @@
     </button>
 </div>
 
-@if (Model != null && Model.Any())
+@if (items.Any())
 {
     <table class="table table-bordered table-striped table-hover align-middle">
         <thead class="table-light">
             <tr>
                 <th style="width: 10%">Birim Kodu</th>
-                <th style="width: 22%">Birim AÃ§Ä±klamasÄ±</th>
-                <th style="width: 12%">Stok TÃ¼rÃ¼</th>
-                <th style="width: 12%">Toplam Stok MiktarÄ±</th>
+                <th style="width: 22%">Birim Açýklamasý</th>
+                <th style="width: 12%">Stok Türü</th>
+                <th style="width: 12%">Toplam Stok Miktarý</th>
                 <th style="width: 12%">Kritik Miktar</th>
-                <th style="width: 14%">Ä°ÅŸlemler</th>
+                <th style="width: 14%">Ýþlemler</th>
             </tr>
         </thead>
 
         <tbody>
-            @foreach (var item in Model)
+            @foreach (var item in items)
             {
                 var isCritical = item.Quantity <= item.CriticalQuantity;
 
@@ -62,7 +106,7 @@
                                 data-critical="@item.CriticalQuantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                 data-shelf="@item.Shelf"
                                 data-cabinet="@item.Cabinet">
-                            DÃ¼zenle
+                            Düzenle
                         </button>
 
                         <form asp-action="Deactivate"
@@ -72,7 +116,7 @@
                             @Html.AntiForgeryToken()
                             <button type="submit"
                                     class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Silmek istediÄŸinizden emin misiniz?');">
+                                    onclick="return confirm('Silmek istediðinizden emin misiniz?');">
                                 Sil
                             </button>
                         </form>
@@ -84,7 +128,27 @@
 }
 else
 {
-    <div class="alert alert-secondary">KayÄ±t bulunamadÄ±.</div>
+    <div class="alert alert-secondary">Kayýt bulunamadý.</div>
+}
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Stok sayfalama">
+        <ul class="pagination">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, pageSize = pageSize, search = searchTerm })">&#8249;</a>
+            </li>
+            @for (var i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = pageSize, search = searchTerm })">@i</a>
+                </li>
+            }
+            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, pageSize = pageSize, search = searchTerm })">&#8250;</a>
+            </li>
+        </ul>
+    </nav>
 }
 
 <!-- CREATE MODAL -->
@@ -104,12 +168,12 @@ else
                     <div class="row g-3">
 
                         <div class="col-md-6">
-                            <label class="form-label">Stok Birim AdÄ±</label>
+                            <label class="form-label">Stok Birim Adý</label>
                             <select name="StockUnitId" class="form-select" asp-items="ViewBag.StockUnits" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Stok SÄ±nÄ±fÄ±</label>
+                            <label class="form-label">Stok Sýnýfý</label>
                             <select name="StockClass" class="form-select" asp-items="ViewBag.StockClasses" required></select>
                         </div>
 
@@ -137,7 +201,7 @@ else
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ä°ptal</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ýptal</button>
                     <button type="submit" class="btn btn-primary">Ekle</button>
                 </div>
 
@@ -158,7 +222,7 @@ else
                 <input type="hidden" name="id" id="editId" />
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Stok DÃ¼zenle</h5>
+                    <h5 class="modal-title">Stok Düzenle</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -166,12 +230,12 @@ else
                     <div class="row g-3">
 
                         <div class="col-md-6">
-                            <label class="form-label">Stok Birim AdÄ±</label>
+                            <label class="form-label">Stok Birim Adý</label>
                             <select name="StockUnitId" id="editStockUnitId" class="form-select" asp-items="ViewBag.StockUnits" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Stok SÄ±nÄ±fÄ±</label>
+                            <label class="form-label">Stok Sýnýfý</label>
                             <select name="StockClass" id="editStockClass" class="form-select" asp-items="ViewBag.StockClasses" required></select>
                         </div>
 
@@ -199,8 +263,8 @@ else
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ä°ptal</button>
-                    <button type="submit" class="btn btn-primary">GÃ¼ncelle</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ýptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
                 </div>
 
             </form>

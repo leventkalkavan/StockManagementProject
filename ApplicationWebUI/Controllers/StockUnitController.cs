@@ -9,6 +9,7 @@ namespace WebUI.Controllers
 {
     public class StockUnitController : Controller
     {
+        private const int DefaultPageSize = 10;
         private readonly IStockUnitService _stockUnitService;
         private readonly IStockTypeService _stockTypeService;
         private readonly IMapper _mapper;
@@ -21,15 +22,9 @@ namespace WebUI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize, string? search = null)
         {
-            var units = await _stockUnitService.GetAllAsync(onlyActive: true);
-
-            await LoadStockTypeDropdownAsync();
-            LoadQuantityUnitDropdown();
-            LoadCurrencyDropdowns();
-
-            return View(units);
+            return await BuildIndexAsync(page, pageSize, search);
         }
 
 
@@ -45,15 +40,14 @@ namespace WebUI.Controllers
 
             if (!ModelState.IsValid)
             {
-                var units = await _stockUnitService.GetAllAsync(onlyActive: true);
-
                 await LoadStockTypeDropdownAsync(dto.StockTypeId);
                 LoadQuantityUnitDropdown(dto.QuantityUnit);
                 LoadCurrencyDropdowns(dto.BuyingCurrency, dto.SellingCurrency);
 
                 ViewBag.OpenCreateModal = true;
                 ViewBag.CreateModel = dto;
-                return View("Index", units);
+                var paged = await _stockUnitService.GetPagedAsync(1, DefaultPageSize, null, onlyActive: true);
+                return View("Index", paged);
             }
 
             await _stockUnitService.CreateAsync(dto);
@@ -73,8 +67,6 @@ namespace WebUI.Controllers
 
             if (!ModelState.IsValid)
             {
-                var units = await _stockUnitService.GetAllAsync(onlyActive: true);
-
                 await LoadStockTypeDropdownAsync(dto.StockTypeId);
                 LoadQuantityUnitDropdown(dto.QuantityUnit);
                 LoadCurrencyDropdowns(dto.BuyingCurrency, dto.SellingCurrency);
@@ -82,7 +74,8 @@ namespace WebUI.Controllers
                 ViewBag.OpenEditModal = true;
                 ViewBag.EditId = id;
                 ViewBag.EditModel = dto;
-                return View("Index", units);
+                var paged = await _stockUnitService.GetPagedAsync(1, DefaultPageSize, null, onlyActive: true);
+                return View("Index", paged);
             }
 
             await _stockUnitService.UpdateAsync(id, dto);
@@ -199,6 +192,17 @@ namespace WebUI.Controllers
                     Selected = selected.HasValue && v == selected.Value
                 })
                 .ToList();
+        }
+
+        private async Task<IActionResult> BuildIndexAsync(int page, int pageSize, string? search)
+        {
+            var paged = await _stockUnitService.GetPagedAsync(page, pageSize, search, onlyActive: true);
+
+            await LoadStockTypeDropdownAsync();
+            LoadQuantityUnitDropdown();
+            LoadCurrencyDropdowns();
+
+            return View("Index", paged);
         }
     }
 }

@@ -5,6 +5,7 @@ namespace BusinessLayer.Services.Abstractions
 {
     public interface IStockItemService
     {
+        Task<PagedResult<StockItemDto>> GetPagedAsync(int page, int pageSize, string? search, bool onlyActive = true);
         Task<List<StockItemDto>> GetAllAsync(bool onlyActive = true);
         Task<StockItemDto?> GetByIdAsync(Guid id);
 

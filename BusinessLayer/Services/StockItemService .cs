@@ -24,6 +24,56 @@ namespace BusinessLayer.Services
             _mapper = mapper;
         }
 
+        public async Task<PagedResult<StockItemDto>> GetPagedAsync(int page, int pageSize, string? search, bool onlyActive = true)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Max(1, pageSize);
+
+            IQueryable<StockItem> q = _stockItemRepo.Query()
+                .Include(x => x.StockUnit)
+                .ThenInclude(u => u.StockType);
+
+            if (onlyActive)
+                q = q.Where(x => x.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                var hasGuid = Guid.TryParse(term, out var searchId);
+                q = q.Where(x =>
+                    (hasGuid && x.Id == searchId) ||
+                    EF.Functions.Like(x.StockUnit.Code, $"%{term}%") ||
+                    EF.Functions.Like(x.StockUnit.Description ?? string.Empty, $"%{term}%") ||
+                    EF.Functions.Like(x.StockUnit.StockType.Name, $"%{term}%") ||
+                    EF.Functions.Like(x.Shelf ?? string.Empty, $"%{term}%") ||
+                    EF.Functions.Like(x.Cabinet ?? string.Empty, $"%{term}%"));
+            }
+
+            var totalCount = await q.CountAsync();
+
+            var skip = (page - 1) * pageSize;
+            if (skip >= totalCount && totalCount > 0)
+            {
+                page = (int)Math.Ceiling(totalCount / (double)pageSize);
+                skip = (page - 1) * pageSize;
+            }
+
+            var items = await q
+                .OrderByDescending(x => x.CreatedDate)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<StockItemDto>
+            {
+                Items = _mapper.Map<List<StockItemDto>>(items),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                SearchTerm = search?.Trim()
+            };
+        }
+
         public async Task<List<StockItemDto>> GetAllAsync(bool onlyActive = true)
         {
             IQueryable<StockItem> q =  _stockItemRepo.Query()

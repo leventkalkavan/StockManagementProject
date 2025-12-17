@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+using AutoMapper;
+using BusinessLayer.DTOs;
 using BusinessLayer.DTOs.StockTypeDtos;
 using BusinessLayer.Services.Abstractions;
 using DataAccessLayer.Repositories.Abstractions;
@@ -16,6 +17,50 @@ namespace BusinessLayer.Services
         {
             _stockTypeRepo = stockTypeRepo;
             _mapper = mapper;
+        }
+
+        public async Task<PagedResult<StockTypeDto>> GetPagedAsync(int page, int pageSize, string? search, bool onlyActive = true)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Max(1, pageSize);
+
+            IQueryable<StockType> q = _stockTypeRepo.Query();
+
+            if (onlyActive)
+                q = q.Where(x => x.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                var hasGuid = Guid.TryParse(term, out var searchId);
+                q = q.Where(x =>
+                    (hasGuid && x.Id == searchId) ||
+                    EF.Functions.Like(x.Name, $"%{term}%"));
+            }
+
+            var totalCount = await q.CountAsync();
+
+            var skip = (page - 1) * pageSize;
+            if (skip >= totalCount && totalCount > 0)
+            {
+                page = (int)Math.Ceiling(totalCount / (double)pageSize);
+                skip = (page - 1) * pageSize;
+            }
+
+            var items = await q
+                .OrderBy(x => x.Name)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<StockTypeDto>
+            {
+                Items = _mapper.Map<List<StockTypeDto>>(items),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                SearchTerm = search?.Trim()
+            };
         }
 
         public async Task<List<StockTypeDto>> GetAllAsync(bool onlyActive = true)

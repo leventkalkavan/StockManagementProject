@@ -10,6 +10,7 @@ namespace WebUI.Controllers
 {
     public class StockItemController : Controller
     {
+        private const int DefaultPageSize = 10;
         private readonly IStockItemService _stockItemService;
         private readonly IStockUnitService _stockUnitService;
         private readonly IMapper _mapper;
@@ -22,13 +23,9 @@ namespace WebUI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize, string? search = null)
         {
-            await LoadStockUnitDropdownAsync();
-            LoadStockClassDropdown();
-
-            var items = await _stockItemService.GetAllAsync(onlyActive: true);
-            return View(items);
+            return await BuildIndexAsync(page, pageSize, search);
         }
 
 
@@ -55,7 +52,8 @@ namespace WebUI.Controllers
             {
                 await LoadStockUnitDropdownAsync(dto.StockUnitId);
                 LoadStockClassDropdown(dto.StockClass);
-                return View(dto);
+                var paged = await _stockItemService.GetPagedAsync(1, DefaultPageSize, null, onlyActive: true);
+                return View("Index", paged);
             }
 
             await _stockItemService.CreateAsync(dto);
@@ -77,7 +75,8 @@ namespace WebUI.Controllers
                 ViewBag.Id = id;
                 await LoadStockUnitDropdownAsync(dto.StockUnitId);
                 LoadStockClassDropdown(dto.StockClass);
-                return View(dto);
+                var paged = await _stockItemService.GetPagedAsync(1, DefaultPageSize, null, onlyActive: true);
+                return View("Index", paged);
             }
 
             await _stockItemService.UpdateAsync(id, dto);
@@ -156,6 +155,15 @@ namespace WebUI.Controllers
             return decimal.TryParse(cleaned, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
                 ? value
                 : parsedValue;
+        }
+
+        private async Task<IActionResult> BuildIndexAsync(int page, int pageSize, string? search)
+        {
+            await LoadStockUnitDropdownAsync();
+            LoadStockClassDropdown();
+
+            var paged = await _stockItemService.GetPagedAsync(page, pageSize, search, onlyActive: true);
+            return View("Index", paged);
         }
     }
 }
