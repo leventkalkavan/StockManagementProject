@@ -51,15 +51,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         (function () {
-            var message = '@(TempData["ErrorMessage"] as string ?? string.Empty)';
-            if (message) {
+            var successMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"] ?? ""));
+            var errorMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorMessage"] ?? ""));
+
+            if (successMessage || errorMessage) {
                 toastr.options = {
                     closeButton: true,
                     progressBar: true,
                     positionClass: "toast-top-right",
                     timeOut: "5000"
                 };
-                toastr.error(message);
+            }
+
+            if (successMessage) {
+                toastr.success(successMessage);
+            }
+
+            if (errorMessage) {
+                toastr.error(errorMessage);
             }
         })();
     </script>

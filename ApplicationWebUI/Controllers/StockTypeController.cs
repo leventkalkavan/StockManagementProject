@@ -34,6 +34,7 @@ namespace WebUI.Controllers
             }
 
             await _stockTypeService.CreateAsync(dto);
+            TempData["SuccessMessage"] = "Stok türü eklendi.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -49,6 +50,7 @@ namespace WebUI.Controllers
             }
 
             await _stockTypeService.UpdateAsync(id, dto);
+            TempData["SuccessMessage"] = "Stok türü güncellendi.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -57,6 +59,7 @@ namespace WebUI.Controllers
         public async Task<IActionResult> Deactivate(Guid id)
         {
             await _stockTypeService.DeactivateAsync(id);
+            TempData["SuccessMessage"] = "Stok türü pasif hale getirildi.";
             return RedirectToAction(nameof(Index));
         }
 

@@ -48,7 +48,7 @@ namespace BusinessLayer.Services
             }
 
             var items = await q
-                .OrderBy(x => x.Name)
+                .OrderByDescending(x => x.CreatedDate)
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();
