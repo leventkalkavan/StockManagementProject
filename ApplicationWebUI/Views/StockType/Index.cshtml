@@ -1,0 +1,160 @@
+﻿@model List<BusinessLayer.DTOs.StockTypeDtos.StockTypeDto>
+
+@{
+    ViewData["Title"] = "Stok Türü Listesi";
+}
+
+<h2>Stok Türü Listesi</h2>
+
+<div class="mb-3">
+    <button class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createStockTypeModal">
+        + Stok Türü Ekle
+    </button>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Stok Türü</th>
+                <th>Durum</th>
+                <th style="width: 30%">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@(item.IsActive ? "Aktif" : "Pasif")</td>
+                    <td>
+                        <button type="button"
+                                class="btn btn-sm btn-warning"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editStockTypeModal"
+                                data-id="@item.Id"
+                                data-name="@item.Name">
+                            Düzenle
+                        </button>
+
+                        <form asp-action="Deactivate"
+                              asp-route-id="@item.Id"
+                              method="post"
+                              class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Silmek istediğinizden emin misiniz?');">
+                                Sil
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- yeni stok turu ekleme modalı-->
+    <div class="modal fade" id="createStockTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Stok Türü Ekle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Stok Türü</label>
+                            <input name="Name"
+                                   class="form-control"
+                                   placeholder="e.g. Kağıt"
+                                   required />
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">
+                            Ekle
+                        </button>
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            İptal
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!--düzenleme modalı-->
+    <div class="modal fade" id="editStockTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <form asp-action="Edit" method="post" id="editStockTypeForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="editStockTypeId" />
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Stok Türü Düzenle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Stok Türü</label>
+                            <input type="hidden" name="id" id="editStockTypeId" />
+                            <input type="text" name="Name" id="editStockTypeName" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">
+                            Güncelle
+                        </button>
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            İptal
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            const editModal = document.getElementById('editStockTypeModal');
+            editModal.addEventListener('show.bs.modal', function (event) {
+              const btn = event.relatedTarget;
+              document.getElementById('editStockTypeId').value = btn.getAttribute('data-id');
+              document.getElementById('editStockTypeName').value = btn.getAttribute('data-name');
+            });
+        </script>
+    }
+
+}
+else
+{
+    <tr>
+        <td colspan="10" class="text-center">
+            Kayıt bulunamadı.
+        </td>
+    </tr>
+}

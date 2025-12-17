@@ -1,0 +1,316 @@
+﻿@model List<BusinessLayer.DTOs.StockUnitDtos.StockUnitDto>
+
+@{
+    ViewData["Title"] = "Stok Birim Listesi";
+}
+
+<h2>Stok Birim Listesi</h2>
+
+<div class="mb-3">
+    <button type="button" class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createStockUnitModal">
+        + Stok Birimi Ekle
+    </button>
+</div>
+
+<table class="table table-bordered table-striped table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Id</th>
+            <th>Birim Kodu</th>
+            <th>Stok Türü</th>
+            <th>Tür</th>
+            <th>Açıklama</th>
+            <th>Alış Fiyatı</th>
+            <th>Alış Para Birimi</th>
+            <th>Satış Fiyatı</th>
+            <th>Satış Para Birimi</th>
+            <th>Kağıt Ağırlığı</th>
+            <th>Durum</th>
+            <th style="width: 18%">İşlemler</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Code</td>
+                    <td>@item.StockTypeName</td>
+                    <td>@item.QuantityUnitText</td>
+                    <td>@(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)</td>
+
+                    <td class="fw-semibold">@item.BuyingPrice.ToString("N2")</td>
+                    <td>@item.BuyingCurrencySymbol</td>
+
+                    <td class="fw-semibold">@item.SellingPrice.ToString("N2")</td>
+                    <td>@item.SellingCurrencySymbol</td>
+
+                    <td>@(item.PaperWeight.HasValue? item.PaperWeight.ToString() : "-")</td>
+                    <td>@(item.IsActive ? "Aktif" : "Pasif")</td>
+
+                    <td>
+                        <button type="button"
+                                class="btn btn-sm btn-warning"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editStockUnitModal"
+                                data-id="@item.Id"
+                                data-code="@item.Code"
+                                data-stocktypeid="@item.StockTypeId"
+                                data-quantityunit="@((int)item.QuantityUnit)"
+                                data-buyingcurrency="@((int)item.BuyingCurrency)"
+                                data-sellingcurrency="@((int)item.SellingCurrency)"
+                                data-description="@item.Description"
+                                data-buying="@item.BuyingPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-selling="@item.SellingPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-paperweight="@(item.PaperWeight?.ToString() ?? "")">
+                            Düzenle
+                        </button>
+
+                        <form asp-action="Deactivate"
+                              asp-route-id="@item.Id"
+                              method="post"
+                              class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Silmek istediğinizden emin misiniz?');">
+                                Sil
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="12" class="text-center">Kayıt bulunamadı.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- stok birim ekleme modali -->
+<div class="modal fade" id="createStockUnitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form id="createStockUnitForm" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Stok Birimi Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+                            <label class="form-label">Birim Kodu</label>
+                            <input name="Code" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Stok Türü</label>
+                            <select name="StockTypeId" class="form-select" asp-items="ViewBag.StockTypes" required></select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Miktar Birimi</label>
+                            <select name="QuantityUnit" class="form-select" asp-items="ViewBag.QuantityUnits" required></select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Alış Fiyatı</label>
+                            <input name="BuyingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Alış Para Birimi</label>
+                            <select name="BuyingCurrency" class="form-select" asp-items="ViewBag.BuyingCurrencies" required></select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Satış Fiyatı</label>
+                            <input name="SellingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Satış Para Birimi</label>
+                            <select name="SellingCurrency" class="form-select" asp-items="ViewBag.SellingCurrencies" required></select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Kağıt Ağırlığı</label>
+                            <input name="PaperWeight" type="number" class="form-control" />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">Açıklama</label>
+                            <input name="Description" class="form-control" />
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Ekle</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- edit modali -->
+<div class="modal fade" id="editStockUnitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form id="editStockUnitForm" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="id" id="editId" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Stok Birimi Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+                            <label class="form-label">Birim Kodu</label>
+                            <input name="Code" id="editCode" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Stok Türü</label>
+                            <select name="StockTypeId" id="editStockTypeId" class="form-select" asp-items="ViewBag.StockTypes" required></select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Miktar Birimi</label>
+                            <select name="QuantityUnit" id="editQuantityUnit" class="form-select" asp-items="ViewBag.QuantityUnits" required></select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Alış Fiyatı</label>
+                            <input name="BuyingPrice" id="editBuyingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Alış Para Birimi</label>
+                            <select name="BuyingCurrency" id="editBuyingCurrency" class="form-select" asp-items="ViewBag.BuyingCurrencies" required></select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Satış Fiyatı</label>
+                            <input name="SellingPrice" id="editSellingPrice" type="text" inputmode="decimal" pattern="[0-9.,]*" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Satış Para Birimi</label>
+                            <select name="SellingCurrency" id="editSellingCurrency" class="form-select" asp-items="ViewBag.SellingCurrencies" required></select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Kağıt Ağırlığı</label>
+                            <input name="PaperWeight" id="editPaperWeight" type="number" class="form-control" />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">Açıklama</label>
+                            <input name="Description" id="editDescription" class="form-control" />
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const editModal = document.getElementById('editStockUnitModal');
+
+        editModal.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            if (!btn) return;
+
+            document.getElementById('editId').value = btn.getAttribute('data-id') || "";
+            document.getElementById('editCode').value = btn.getAttribute('data-code') || "";
+
+            document.getElementById('editStockTypeId').value = btn.getAttribute('data-stocktypeid') || "";
+            document.getElementById('editQuantityUnit').value = btn.getAttribute('data-quantityunit') || "";
+            document.getElementById('editBuyingCurrency').value = btn.getAttribute('data-buyingcurrency') || "";
+            document.getElementById('editSellingCurrency').value = btn.getAttribute('data-sellingcurrency') || "";
+
+            document.getElementById('editDescription').value = btn.getAttribute('data-description') || "";
+            document.getElementById('editBuyingPrice').value = btn.getAttribute('data-buying') || "0";
+            document.getElementById('editSellingPrice').value = btn.getAttribute('data-selling') || "0";
+            document.getElementById('editPaperWeight').value = btn.getAttribute('data-paperweight') || "";
+        });
+
+        const priceFields = ['BuyingPrice', 'SellingPrice'];
+        function normalizePrices(form) {
+            priceFields.forEach(name => {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (!input) return;
+
+                const raw = (input.value || '').trim();
+                if (!raw) return;
+
+                const hasComma = raw.includes(',');
+                const hasDot = raw.includes('.');
+                let normalized = raw;
+
+                if (hasComma && hasDot) {
+                    if (raw.lastIndexOf(',') > raw.lastIndexOf('.')) {
+                        normalized = raw.replace(/\./g, '').replace(',', '.');
+                    } else {
+                        normalized = raw.replace(/,/g, '');
+                    }
+                } else if (hasComma) {
+                    normalized = raw.replace(/\./g, '').replace(',', '.');
+                } else if (hasDot) {
+                    normalized = raw.replace(/,/g, '');
+                }
+
+                input.value = normalized;
+            });
+        }
+
+        const createForm = document.getElementById('createStockUnitForm');
+        const editForm = document.getElementById('editStockUnitForm');
+
+        if (createForm) {
+            createForm.addEventListener('submit', function () {
+                normalizePrices(createForm);
+            });
+        }
+
+        if (editForm) {
+            editForm.addEventListener('submit', function () {
+                normalizePrices(editForm);
+            });
+        }
+    </script>
+}

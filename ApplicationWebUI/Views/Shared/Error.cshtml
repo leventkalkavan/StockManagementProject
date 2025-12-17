@@ -1,0 +1,16 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Hata";
+    var message = TempData["ErrorMessage"] as string;
+}
+
+<h1 class="text-danger">Hata</h1>
+
+    <h2 class="text-danger">İsteğiniz işlenirken bir hata oluştu.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>İstek Id:</strong> <code>@Model.RequestId</code>
+    </p>
+}

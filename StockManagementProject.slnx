@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ApplicationWebUI/ApplicationWebUI.csproj" Id="cdbae08d-8337-4818-bae5-98612f84029a" />
+  <Project Path="BusinessLayer/BusinessLayer.csproj" Id="a3021bbf-ae9d-4043-92d1-10a5bf14d2b5" />
+  <Project Path="DataAccessLayer/DataAccessLayer.csproj" Id="12cdc2ab-4991-41e8-b50b-2e9cf30debbd" />
+  <Project Path="EntityLayer/EntityLayer.csproj" Id="37b6c7e4-560c-47a3-9246-722100c17a89" />
+</Solution>

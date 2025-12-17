@@ -1,0 +1,34 @@
+# Build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+*.exe
+*.dll
+*.pdb
+
+# VS / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+
+# Logs and data
+Logs/
+*.log
+*.ldf
+*.mdf
+
+# Environment / secrets
+*.env
+appsettings.*.local.json
+
+# EF Core
+Migrations/**/__EFMigrationsHistory
+
+# OS junk
+Thumbs.db
+.DS_Store
+
